@@ -32,7 +32,6 @@ function sendWS(str, cb) {
     str.id = id;
     callbacks.set(id, cb);
     try {
-        console.log(connect.state)
         connect.send(JSON.stringify(str));
     } catch (err) {
         logger.error(err);
@@ -75,6 +74,7 @@ function onMain(e) {
     if (e.group.id !== NIL._vanilla.cfg.group.main) return;
     let msg = e.raw_message.split(' ');
     if (msg[0] != '/fp') return;
+    if(config.admin.includes(e.sender.qq) == false)return;
     switch (msg[1]) {
         case 'list':
             sendWS({ type: 'list' }, (dt) => {
@@ -92,6 +92,19 @@ function onMain(e) {
                 })
             } else {
                 e.reply('用法：/fp add <假人名称> [是否允许聊天控制（是/否）]', true);
+            }
+            break;
+        case "rem":
+            if(msg[2]){
+                sendWS({type:'remove',data:{name:msg[2]}},(dt)=>{
+                    if (dt.success) {
+                        e.reply(`假人[${dt.name}]移除成功`, true);
+                    } else {
+                        e.reply(`假人[${dt.name}]移除失败：${dt.reason}`, true);
+                    }
+                })
+            }else{
+                e.reply('用法：/fp rem <假人名称>', true);
             }
             break;
         case 'stall':
@@ -129,6 +142,16 @@ function onMain(e) {
             }else{
                 e.reply(`/fp con <假人名称>`,true);
             }
+            break;
+        case 'disall':
+            sendWS({type:'disconnect_all'},(dt)=>{
+                e.reply(`${dt.list.join(",")}已断开连接`,true);
+            })
+            break;
+        case "conall":
+            sendWS({type:'connect_all'},(dt)=>{
+                e.reply(`${dt.list.join(",")}已连接`,true);
+            });
             break;
     }
 }
